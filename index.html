@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VoxAura AI Voice Studio — Give your words a voice with realistic AI text-to-speech." />
+  <title>VoxAura AI Voice Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><rect width='44' height='44' rx='10' fill='%23070510'/><circle cx='22' cy='22' r='15.5' fill='none' stroke='%23a855f7' stroke-width='3'/><rect x='15' y='18.5' width='3.6' height='7' rx='1.8' fill='%2322d3ee'/><rect x='20.2' y='13' width='3.6' height='18' rx='1.8' fill='%23a855f7'/><rect x='25.4' y='18.5' width='3.6' height='7' rx='1.8' fill='%2322d3ee'/></svg>" />
+</head>
+<body>
+  <!-- 3D animated background (canvas) + film grain -->
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="bg-noise" aria-hidden="true"></div>
+  <!-- Ambient background -->
+  <div class="bg-orb orb-1" aria-hidden="true"></div>
+  <div class="bg-orb orb-2" aria-hidden="true"></div>
+  <div class="bg-orb orb-3" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="logo" id="siteLogo">
+      <svg class="logo-mark" viewBox="0 0 44 44" aria-hidden="true">
+        <defs>
+          <linearGradient id="voxLogoGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a855f7" />
+            <stop offset="1" stop-color="#22d3ee" />
+          </linearGradient>
+        </defs>
+        <circle cx="22" cy="22" r="19" fill="rgba(139,92,246,.08)" stroke="url(#voxLogoGrad)" stroke-width="3" />
+        <rect x="14.2" y="18.5" width="4" height="7" rx="2" fill="#22d3ee" />
+        <rect x="20" y="12" width="4" height="20" rx="2" fill="url(#voxLogoGrad)" />
+        <rect x="25.8" y="18.5" width="4" height="7" rx="2" fill="#22d3ee" />
+      </svg>
+      <span class="logo-text">VoxAura</span>
+      <span class="logo-sub">AI Voice Studio</span>
+    </div>
+    <nav class="deck-nav" aria-label="Slide navigation">
+      <button class="deck-tab is-active" data-goto="0" type="button">Studio</button>
+      <button class="deck-tab" data-goto="1" type="button">Player</button>
+      <button class="deck-tab" data-goto="2" type="button">Voices</button>
+      <button class="deck-tab" data-goto="3" type="button">Setup</button>
+    </nav>
+  </header>
+
+  <!-- ============ SLIDE DECK ============ -->
+  <div class="deck" id="deck">
+    <div class="slides" id="slides">
+
+      <!-- SLIDE 1 · STUDIO -->
+      <section class="slide" data-name="Studio" aria-label="Studio">
+        <div class="slide-inner">
+          <div class="hero-compact anim-in">
+            <p class="eyebrow">Premium AI Text-to-Speech</p>
+            <h1 class="hero-title">Give Your Words <span class="gradient-text">a Voice.</span></h1>
+            <p class="hero-sub">Pick a voice, type your script, hit generate — your audio lands on the next slide.</p>
+          </div>
+
+          <div class="card glass tilt anim-in" data-tilt>
+            <div class="card-head">
+              <h2><span class="accent">✦</span> Voice Studio</h2>
+              <p class="card-sub">Type or paste your text, choose a voice, and generate.</p>
+            </div>
+
+            <div class="gender-tabs" role="tablist" aria-label="Filter voices by gender">
+              <button class="gender-tab is-active" role="tab" aria-selected="true" data-gender="female" type="button">Female</button>
+              <button class="gender-tab" role="tab" aria-selected="false" data-gender="male" type="button">Male</button>
+              <button class="gender-tab" role="tab" aria-selected="false" data-gender="all" type="button">All</button>
+            </div>
+
+            <label class="field-label" for="voiceSelect">Voice</label>
+            <div class="voice-grid" id="voiceGrid" aria-live="polite"></div>
+            <select id="voiceSelect" class="visually-hidden" aria-label="Selected voice"></select>
+
+            <div class="textarea-wrap">
+              <label class="field-label" for="textInput">Your script</label>
+              <textarea id="textInput" rows="6" maxlength="5000"
+                placeholder="Type or paste your text here… e.g. “Welcome to VoxAura, where every word finds its voice.”"
+                aria-describedby="charCounter inputHelp"></textarea>
+              <div class="textarea-foot">
+                <span id="inputHelp" class="hint">Keep it natural — punctuation guides the pacing. · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> generates.</span>
+                <span id="charCounter" class="counter" aria-live="polite">0 / 5000</span>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="generateBtn" class="btn btn-primary btn-generate" type="button">
+                <span class="btn-label">Generate Voice →</span>
+              </button>
+              <button id="clearBtn" class="btn btn-ghost" type="button">Clear</button>
+            </div>
+
+            <div id="statusBox" class="status" role="status" aria-live="assertive"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 2 · PLAYER (result page) -->
+      <section class="slide" data-name="Player" aria-label="Audio player">
+        <div class="slide-inner">
+          <div class="card glass tilt anim-in" data-tilt id="playerCard">
+            <div class="card-head">
+              <h2><span class="accent">♫</span> Your Audio</h2>
+              <p class="card-sub" id="playerSub">Your generated voice will appear here.</p>
+              <span class="demo-badge" id="demoBadge" hidden>⚡ Demo voice · free browser preview</span>
+            </div>
+
+            <div class="player-empty" id="playerEmpty">
+              <div class="empty-icon" aria-hidden="true">🎧</div>
+              <p>No audio yet.<br />Go back to the Studio and press <strong>Generate Voice</strong>.</p>
+              <button class="btn btn-primary back-btn" data-goto="0" type="button">← Back to Studio</button>
+            </div>
+
+            <div class="player" id="player" hidden>
+              <div class="waveform" id="waveform" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+
+              <div class="player-row">
+                <button id="playPauseBtn" class="play-btn" type="button" aria-label="Play">
+                  <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+                <div class="track-block">
+                  <input type="range" id="seekBar" class="seek" min="0" max="100" value="0" step="0.1" aria-label="Seek through audio" />
+                  <div class="time-row">
+                    <span id="currentTime">0:00</span>
+                    <span id="totalTime">0:00</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="player-row secondary">
+                <div class="volume-block">
+                  <label for="volumeBar" class="visually-hidden">Volume</label>
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="vol-icon"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+                  <input type="range" id="volumeBar" class="seek volume" min="0" max="1" value="1" step="0.01" aria-label="Volume" />
+                </div>
+                <button id="downloadBtn" class="btn btn-ghost btn-download" type="button" disabled>
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.6l3.3-3.3 1.4 1.4L12 16.4l-4.7-4.7 1.4-1.4L12 13.6V3h0zM5 19h14v2H5z"/></svg>
+                  Download MP3
+                </button>
+              </div>
+
+              <div class="actions player-actions">
+                <button class="btn btn-ghost" data-goto="0" type="button">← Back to Studio</button>
+                <button class="btn btn-primary" id="newBtn" type="button">Generate Another</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3 · VOICES -->
+      <section class="slide" data-name="Voices" aria-label="Voice library">
+        <div class="slide-inner wide">
+          <h2 class="section-title anim-in">Voice Library</h2>
+          <p class="section-sub anim-in">A curated set of ElevenLabs voices. Tap <strong>Use this voice</strong> to jump back to the Studio with it selected.</p>
+          <div class="voice-lib anim-in" id="voiceLibrary"></div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4 · SETUP -->
+      <section class="slide" data-name="Setup" aria-label="Setup">
+        <div class="slide-inner">
+          <div class="card glass anim-in">
+            <h2><span class="accent">⚙</span> Quick Setup</h2>
+            <ol class="setup-steps">
+              <li><strong>No API key needed to start</strong> — free neural voices work out of the box.</li>
+              <li><strong>Install &amp; run:</strong> <code>npm install</code> then <code>npm start</code> — open <code>http://localhost:3000</code>.</li>
+              <li><strong>Want premium ElevenLabs voices?</strong> Set <code>TTS_PROVIDER=elevenlabs</code> in <code>.env</code>, add your key to <code>ELEVENLABS_API_KEY</code>, and make sure the account has credits.</li>
+              <li><strong>Voice IDs</strong> can be changed in the <code>VOICES</code> array in <code>script.js</code> (<code>edge</code> = Edge neural voice, <code>gl</code> = Google language, <code>id</code> = ElevenLabs ID).</li>
+            </ol>
+            <p class="hint">On static hosts (GitHub Pages, Netlify) the site calls the free voices directly from your browser — no backend needed. Full guide in <code>README.md</code>.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Slide dots -->
+  <div class="dots" id="dots" aria-label="Slide indicators"></div>
+
+  <!-- Cinematic transition veil -->
+  <div class="transition-veil" id="veil" aria-hidden="true"></div>
+
+  <!-- Generating overlay -->
+  <div class="loader-overlay" id="loader" hidden>
+    <div class="loader-box">
+      <div class="waveform playing big" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p>Generating your voice…</p>
+      <span class="hint">Usually takes a few seconds</span>
+    </div>
+  </div>
+
+  <audio id="audioEl" preload="metadata"></audio>
+
+  <footer class="site-footer">
+    <p>VoxAura AI Voice Studio · Built with HTML, CSS &amp; vanilla JS · Audio by ElevenLabs</p>
+    <p class="foot-tips"><kbd>←</kbd><kbd>→</kbd> switch pages · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> generates voice</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
